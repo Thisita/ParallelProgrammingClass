@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="matrixMul_kernel.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CH\ch_conio.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chAssert.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chCommandLine.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chCUDA.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chDrv.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chError.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chShmoo.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chThread.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chThread_POSIX.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chThread_Win32.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chTimer.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+    <ClInclude Include="CH\chUtil.h">
+      <Filter>CH</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CH">
+      <UniqueIdentifier>{d5b104c3-658d-4d2f-bf37-944f01d08fae}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

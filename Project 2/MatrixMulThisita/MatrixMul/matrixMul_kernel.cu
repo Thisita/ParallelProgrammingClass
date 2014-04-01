@@ -88,6 +88,27 @@ matrixMulKernel( float* C, float* A, float* B, unsigned int hA, unsigned int wA,
 	}
 }
 
+/*
+ * Fast impl of CUDA matrix by vector multiplication using shared memory
+ *
+ * My version removes all the unnecessary vram allocations,
+ * only allocates the shared vram once, makes use of a lot of
+ * code order and calculation order optimizations,
+ * and some other tricks :D
+ */
+extern "C" __global__ void
+matrixMulVecKernel( float* C, float* A, float* B, unsigned int hA, unsigned int wA)
+{
+	unsigned int threadId = threadIdx.x + blockIdx.x * blockDim.x;
+  float c = 0.0f;
+  
+  if(threadId < wA) {
+    for(unsigned int i = 0; i < hA; ++i) {
+      c += A[(i * wA) + threadId] * B[i];
+    }
+    C[threadId] = c;
+  }
+}
 
 
 //

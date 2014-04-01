@@ -41,6 +41,35 @@ void OurKernelTest(float *C, float *Ref_C, float *A, float *B, unsigned int HA, 
 	printf ("====================== End Our Kernel and/or CPU Test =======================\n\n\n");
 }
 
+void OurKernelVTest(float *C, float *Ref_C, float *A, float *B, unsigned int HA, unsigned int WA)
+{
+	chTimerTimestamp start, stop;
+
+	printf ("====================== Our Kernel and/or CPU Test ==========================\n\n");
+
+	for(unsigned int i = 0; i < HA * WB; ++i) C[i] = 0;
+
+	// CPU matrix multiplication timing
+	printf("CPU timing .....\n");
+	chTimerGetTime (&start);
+	matrixVMul (Ref_C, A, B, HA, WA);
+	chTimerGetTime (&stop);
+	printf ("\tCPU time = %fl seconds\n\n", chTimerElapsedTime(&start, & stop));
+
+	for(unsigned int i = 0; i < HA; ++i) C[i] = 0;
+
+	int status;
+	// CUDA matrix multiplication timing
+	printf("Our kernel timing .....\n");
+	chTimerGetTime (&start);
+	status = CUDA_matrixVecMul (C, A, B, HA, WA);
+	chTimerGetTime (&stop);
+	printf ("\tOur kernel call status = %d\n", status);
+	printf ("\tOur kernel time = %fl seconds\n\n", chTimerElapsedTime(&start, & stop));
+
+	printf ("====================== End Our Kernel and/or CPU Test =======================\n\n\n");
+}
+
 #if 0
 #define heightA 4800
 #define widthA 4800
@@ -53,51 +82,86 @@ void OurKernelTest(float *C, float *Ref_C, float *A, float *B, unsigned int HA, 
 int main(int argc, char *argv[])
 {
 	// Usage info
-	if(argc != 2) {
-		printf("Usage: %s size", argv[0]);
+	if(argc != 3 || argv[1] != 'v' || argv[1] != 'm') {
+		printf("Usage: %s (v,m) size", argv[0]);
 		return EXIT_FAILURE;
 	}
 
 	unsigned int heightA, widthA, heightB, widthB, heightC, widthC;
-
+  
+  // get the mode
+  const char mode = argv[1];
+  
 	// Parse size
-	unsigned int size = static_cast<unsigned int>(atoi(argv[1]));
+	unsigned int size = static_cast<unsigned int>(atoi(argv[2]));
 	if(size < 2) {
 		printf("Invalid matrix size\n");
 		return EXIT_FAILURE;
 	}
+  
+  if(mode == 'm') {
+    // Matrix mode
+    // Calculate the sizes out
+    heightA = widthA = widthB = size;
+    heightB = widthA;
+    heightC = heightA;
+    widthC = widthB;
 
-	// Calculate the sizes out
-	heightA = widthA = widthB = size;
-	heightB = widthA;
-	heightC = heightA;
-	widthC = widthB;
+    // start some memory
+    float *A = NULL, *B = NULL, *C = NULL, *Ref_C = NULL;
 
-	// start some memory
-	float *A = NULL, *B = NULL, *C = NULL, *Ref_C = NULL;
+    A = (float *)malloc(heightA * widthA * sizeof(float));
+    B = (float *)malloc(heightB * widthB * sizeof(float));
+    C = (float *)malloc(heightC * widthC * sizeof(float));
+    Ref_C = (float *)malloc(heightC * widthC * sizeof(float));
 
-	A = (float *)malloc(heightA * widthA * sizeof(float));
-	B = (float *)malloc(heightB * widthB * sizeof(float));
-	C = (float *)malloc(heightC * widthC * sizeof(float));
-	Ref_C = (float *)malloc(heightC * widthC * sizeof(float));
+    // Int the mem
 
-	// Int the mem
+    for(unsigned int i = 0; i < heightA * widthA; ++i)
+      A[i] = (float)(rand() % 10);
+    for(unsigned int i = 0; i < heightB * widthB; ++i)
+      B[i] = (float)(rand() % 10);
+    for(unsigned int i = 0; i < heightC * widthC; ++i)
+      C[i] = Ref_C[i] = 0;
 
-	for(unsigned int i = 0; i < heightA * widthA; ++i)
-		A[i] = (float)(rand() % 10);
-	for(unsigned int i = 0; i < heightB * widthB; ++i)
-		B[i] = (float)(rand() % 10);
-	for(unsigned int i = 0; i < heightC * widthC; ++i)
-		C[i] = Ref_C[i] = 0;
+    // Say what we are doing
+    printf("%d x %d matrix times %d x %d matrix:\n\n", heightA, widthA, heightB, widthB);
 
-	// Say what we are doing
-	printf("%d x %d matrix times %d x %d matrix:\n\n", heightA, widthA, heightB, widthB);
+    // Start the tests
+    //CUBLASTest (C, Ref_C, A, B, heightA, widthA, widthB, 0);
+    OurKernelTest(C, Ref_C, A, B, heightA, widthA, widthB);
+  } else {
+    // Calculate the sizes out
+    heightA = heightB = heightC = widthA = size;
+    widthB = 1;
+    widthC = 1;
 
-	// Start the tests
-	//CUBLASTest (C, Ref_C, A, B, heightA, widthA, widthB, 0);
-	OurKernelTest(C, Ref_C, A, B, heightA, widthA, widthB);
+    // start some memory
+    float *A = NULL, *B = NULL, *C = NULL, *Ref_C = NULL;
 
-    return EXIT_SUCCESS;
+    A = (float *)malloc(heightA * widthA * sizeof(float));
+    B = (float *)malloc(heightB * widthB * sizeof(float));
+    C = (float *)malloc(heightC * widthC * sizeof(float));
+    Ref_C = (float *)malloc(heightC * widthC * sizeof(float));
+
+    // Int the mem
+
+    for(unsigned int i = 0; i < heightA * widthA; ++i)
+      A[i] = (float)(rand() % 10);
+    for(unsigned int i = 0; i < heightB * widthB; ++i)
+      B[i] = (float)(rand() % 10);
+    for(unsigned int i = 0; i < heightC * widthC; ++i)
+      C[i] = Ref_C[i] = 0;
+
+    // Say what we are doing
+    printf("%d x %d matrix times %d x %d matrix:\n\n", heightA, widthA, heightB, widthB);
+
+    // Start the tests
+    //CUBLASTest (C, Ref_C, A, B, heightA, widthA, widthB, 0);
+    OurKernelVTest(C, Ref_C, A, B, heightA, widthA);
+  }
+
+  return EXIT_SUCCESS;
 }
 
 /*
@@ -136,4 +200,17 @@ void matrixMul(float* C, float* A, float* B, unsigned int HA, unsigned int WA, u
 			C[ci] = c;
 		}
 	}
+}
+
+void matrixVMul(float* C, float* A, float* B, unsigned int HA, unsigned int WA)
+{
+	float c = 0.0f;
+  
+  for(unsigned int i = 0; i < HA; ++i) {
+    c = 0.0f;
+    for(unsigned int j = 0; j < WA; ++j) {
+      c += A[i][j] * B[j];
+    }
+    C[i] = c;
+  }
 }

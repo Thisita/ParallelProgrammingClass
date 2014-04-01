@@ -163,7 +163,7 @@ int CUDA_matrixVecMul(float* C, float* A, float* B, unsigned int HA, unsigned in
     dim3 grid ((1+block_size-1)/block_size, (HA+ block_size-1)/block_size);
 	
 	// Call kernel
-	matrixMulKernel<<< grid, block >>>(d_C, d_A, d_B, HA, WA, WB);  
+	CUDA_matrixVecMul<<< grid, block >>>(d_C, d_A, d_B, HA, WA);  
 
 	// this isn't necessary anymore, but good to have for compatability sake
     cudaDeviceSynchronize();

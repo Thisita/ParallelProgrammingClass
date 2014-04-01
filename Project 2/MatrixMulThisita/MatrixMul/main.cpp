@@ -10,6 +10,7 @@
 void matrixMul(float* C, float* A, float* B, unsigned int HA, unsigned int WA, unsigned int WB);
 
 int CUDA_matrixMul(float* C, float* A, float* B, unsigned int HA, unsigned int WA, unsigned int WB);
+int CUDA_matrixVecMul(float* C, float* A, float* B, unsigned int HA, unsigned int WA);
 
 void OurKernelTest(float *C, float *Ref_C, float *A, float *B, unsigned int HA, unsigned int WA, unsigned int WB)
 {

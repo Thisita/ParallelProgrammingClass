@@ -114,6 +114,91 @@ matrixMulVecKernel( float* C, float* A, float* B, unsigned int hA, unsigned int 
 //
 // Our CUDA matrix multiplication interface function
 //
+int CUDA_matrixVecMul(float* C, float* A, float* B, unsigned int HA, unsigned int WA)		
+{
+    float *d_A = 0, *d_B = 0, *d_C = 0;
+
+	cudaError_t cudaStatus;
+
+	// Make sure CUDA device 0 is available
+    cudaStatus = cudaSetDevice(0);
+    if (cudaStatus != cudaSuccess) 
+	{
+        fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
+        return 1;
+    }
+ 
+    /* Allocate device memory for the matrices (d_A, d_B, and d_C) */
+    if (cudaMalloc((void **)&d_A, HA * WA * sizeof(d_A[0])) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! device memory allocation error (allocate A)\n");
+        return EXIT_FAILURE;
+    }
+    if (cudaMalloc((void **)&d_B, WA * sizeof(d_B[0])) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! device memory allocation error (allocate B)\n");
+        return EXIT_FAILURE;
+    }
+    if (cudaMalloc((void **)&d_C, HA * sizeof(d_C[0])) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! device memory allocation error (allocate C)\n");
+        return EXIT_FAILURE;
+    }
+	// Copy host memory (A, and B) to device
+    cudaStatus = cudaMemcpy(d_A, A, HA*WA*sizeof(A[0]), cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess)
+    {
+        printf("cudaMemcpy (d_A, A) returned error code %d\n", cudaStatus);
+        exit(EXIT_FAILURE);
+    }
+    cudaStatus = cudaMemcpy(d_B, B, WA*sizeof(B[0]), cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess)
+    {
+        printf("cudaMemcpy (d_B, B) returned error code %d\n", cudaStatus);
+        exit(EXIT_FAILURE);
+    }
+
+	// Setup execution parameters and call kernel
+    dim3 block(block_size, block_size);
+    dim3 grid ((1+block_size-1)/block_size, (HA+ block_size-1)/block_size);
+	
+	// Call kernel
+	matrixMulKernel<<< grid, block >>>(d_C, d_A, d_B, HA, WA, WB);  
+
+	// this isn't necessary anymore, but good to have for compatability sake
+    cudaDeviceSynchronize();
+
+	// Copy result (C)  from device to host
+    cudaStatus = cudaMemcpy(C, d_C, HA*sizeof(C[0]), cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess)
+    {
+        printf("cudaMemcpy (C, d_C) returned error code\n", cudaStatus);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Device memory clean up */
+    if (cudaFree(d_A) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! memory free error (A)\n");
+        return EXIT_FAILURE;
+    }
+    if (cudaFree(d_B) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! memory free error (B)\n");
+        return EXIT_FAILURE;
+    }
+    if (cudaFree(d_C) != cudaSuccess)
+    {
+        fprintf(stderr, "!!!! memory free error (C)\n");
+        return EXIT_FAILURE;
+    }
+
+	return EXIT_SUCCESS;
+}
+
+//
+// Our CUDA matrix multiplication interface function
+//
 int CUDA_matrixMul(float* C, float* A, float* B, unsigned int HA, unsigned int WA, unsigned int WB)		
 {
     float *d_A = 0, *d_B = 0, *d_C = 0;
